@@ -7,6 +7,13 @@ import {
   assignments,
   incidents,
   documents,
+  fuelStations,
+  fuelRecords,
+  driverChecklists,
+  checklistItems,
+  maintenanceRecords,
+  maintenanceTasks,
+  inventoryItems,
   type User,
   type UpsertUser,
   type Driver,
@@ -23,6 +30,20 @@ import {
   type InsertIncident,
   type Document,
   type InsertDocument,
+  type FuelStation,
+  type InsertFuelStation,
+  type FuelRecord,
+  type InsertFuelRecord,
+  type DriverChecklist,
+  type InsertDriverChecklist,
+  type ChecklistItem,
+  type InsertChecklistItem,
+  type MaintenanceRecord,
+  type InsertMaintenanceRecord,
+  type MaintenanceTask,
+  type InsertMaintenanceTask,
+  type InventoryItem,
+  type InsertInventoryItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, isNull, sql } from "drizzle-orm";
@@ -70,6 +91,44 @@ export interface IStorage {
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByEntity(entityId: string, entityType: string): Promise<Document[]>;
+  
+  // Fuel station operations
+  createFuelStation(fuelStation: InsertFuelStation): Promise<FuelStation>;
+  getAllFuelStations(): Promise<FuelStation[]>;
+  updateFuelStation(id: string, updates: Partial<InsertFuelStation>): Promise<FuelStation>;
+  
+  // Fuel record operations
+  createFuelRecord(fuelRecord: InsertFuelRecord): Promise<FuelRecord>;
+  getFuelRecordsByVehicleId(vehicleId: string): Promise<FuelRecord[]>;
+  getFuelRecordsByDriverId(driverId: string): Promise<FuelRecord[]>;
+  getAllFuelRecords(): Promise<FuelRecord[]>;
+  
+  // Driver checklist operations
+  createDriverChecklist(checklist: InsertDriverChecklist): Promise<DriverChecklist>;
+  getChecklistsByDriverId(driverId: string): Promise<DriverChecklist[]>;
+  updateDriverChecklist(id: string, updates: Partial<InsertDriverChecklist>): Promise<DriverChecklist>;
+  
+  // Checklist item operations
+  createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem>;
+  getChecklistItemsByChecklistId(checklistId: string): Promise<ChecklistItem[]>;
+  updateChecklistItem(id: string, updates: Partial<InsertChecklistItem>): Promise<ChecklistItem>;
+  
+  // Maintenance record operations
+  createMaintenanceRecord(record: InsertMaintenanceRecord): Promise<MaintenanceRecord>;
+  getMaintenanceRecordsByVehicleId(vehicleId: string): Promise<MaintenanceRecord[]>;
+  getAllMaintenanceRecords(): Promise<MaintenanceRecord[]>;
+  updateMaintenanceRecord(id: string, updates: Partial<InsertMaintenanceRecord>): Promise<MaintenanceRecord>;
+  
+  // Maintenance task operations
+  createMaintenanceTask(task: InsertMaintenanceTask): Promise<MaintenanceTask>;
+  getMaintenanceTasksByRecordId(recordId: string): Promise<MaintenanceTask[]>;
+  updateMaintenanceTask(id: string, updates: Partial<InsertMaintenanceTask>): Promise<MaintenanceTask>;
+  
+  // Inventory operations
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  getAllInventoryItems(): Promise<InventoryItem[]>;
+  updateInventoryItem(id: string, updates: Partial<InsertInventoryItem>): Promise<InventoryItem>;
+  getLowStockItems(): Promise<InventoryItem[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -259,6 +318,180 @@ export class DatabaseStorage implements IStorage {
       .from(documents)
       .where(and(eq(documents.entityId, entityId), eq(documents.entityType, entityType)))
       .orderBy(desc(documents.uploadedAt));
+  }
+
+  // Fuel station operations
+  async createFuelStation(fuelStation: InsertFuelStation): Promise<FuelStation> {
+    const [newFuelStation] = await db.insert(fuelStations).values(fuelStation).returning();
+    return newFuelStation;
+  }
+
+  async getAllFuelStations(): Promise<FuelStation[]> {
+    return await db.select().from(fuelStations).where(eq(fuelStations.isActive, true));
+  }
+
+  async updateFuelStation(id: string, updates: Partial<InsertFuelStation>): Promise<FuelStation> {
+    const [updatedFuelStation] = await db
+      .update(fuelStations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(fuelStations.id, id))
+      .returning();
+    return updatedFuelStation;
+  }
+
+  // Fuel record operations
+  async createFuelRecord(fuelRecord: InsertFuelRecord): Promise<FuelRecord> {
+    const [newFuelRecord] = await db.insert(fuelRecords).values(fuelRecord).returning();
+    return newFuelRecord;
+  }
+
+  async getFuelRecordsByVehicleId(vehicleId: string): Promise<FuelRecord[]> {
+    return await db
+      .select()
+      .from(fuelRecords)
+      .where(eq(fuelRecords.vehicleId, vehicleId))
+      .orderBy(desc(fuelRecords.refuelDate));
+  }
+
+  async getFuelRecordsByDriverId(driverId: string): Promise<FuelRecord[]> {
+    return await db
+      .select()
+      .from(fuelRecords)
+      .where(eq(fuelRecords.driverId, driverId))
+      .orderBy(desc(fuelRecords.refuelDate));
+  }
+
+  async getAllFuelRecords(): Promise<FuelRecord[]> {
+    return await db
+      .select()
+      .from(fuelRecords)
+      .orderBy(desc(fuelRecords.refuelDate));
+  }
+
+  // Driver checklist operations
+  async createDriverChecklist(checklist: InsertDriverChecklist): Promise<DriverChecklist> {
+    const [newChecklist] = await db.insert(driverChecklists).values(checklist).returning();
+    return newChecklist;
+  }
+
+  async getChecklistsByDriverId(driverId: string): Promise<DriverChecklist[]> {
+    return await db
+      .select()
+      .from(driverChecklists)
+      .where(eq(driverChecklists.driverId, driverId))
+      .orderBy(desc(driverChecklists.createdAt));
+  }
+
+  async updateDriverChecklist(id: string, updates: Partial<InsertDriverChecklist>): Promise<DriverChecklist> {
+    const [updatedChecklist] = await db
+      .update(driverChecklists)
+      .set(updates)
+      .where(eq(driverChecklists.id, id))
+      .returning();
+    return updatedChecklist;
+  }
+
+  // Checklist item operations
+  async createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem> {
+    const [newItem] = await db.insert(checklistItems).values(item).returning();
+    return newItem;
+  }
+
+  async getChecklistItemsByChecklistId(checklistId: string): Promise<ChecklistItem[]> {
+    return await db
+      .select()
+      .from(checklistItems)
+      .where(eq(checklistItems.checklistId, checklistId));
+  }
+
+  async updateChecklistItem(id: string, updates: Partial<InsertChecklistItem>): Promise<ChecklistItem> {
+    const [updatedItem] = await db
+      .update(checklistItems)
+      .set(updates)
+      .where(eq(checklistItems.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  // Maintenance record operations
+  async createMaintenanceRecord(record: InsertMaintenanceRecord): Promise<MaintenanceRecord> {
+    const [newRecord] = await db.insert(maintenanceRecords).values(record).returning();
+    return newRecord;
+  }
+
+  async getMaintenanceRecordsByVehicleId(vehicleId: string): Promise<MaintenanceRecord[]> {
+    return await db
+      .select()
+      .from(maintenanceRecords)
+      .where(eq(maintenanceRecords.vehicleId, vehicleId))
+      .orderBy(desc(maintenanceRecords.createdAt));
+  }
+
+  async getAllMaintenanceRecords(): Promise<MaintenanceRecord[]> {
+    return await db
+      .select()
+      .from(maintenanceRecords)
+      .orderBy(desc(maintenanceRecords.createdAt));
+  }
+
+  async updateMaintenanceRecord(id: string, updates: Partial<InsertMaintenanceRecord>): Promise<MaintenanceRecord> {
+    const [updatedRecord] = await db
+      .update(maintenanceRecords)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(maintenanceRecords.id, id))
+      .returning();
+    return updatedRecord;
+  }
+
+  // Maintenance task operations
+  async createMaintenanceTask(task: InsertMaintenanceTask): Promise<MaintenanceTask> {
+    const [newTask] = await db.insert(maintenanceTasks).values(task).returning();
+    return newTask;
+  }
+
+  async getMaintenanceTasksByRecordId(recordId: string): Promise<MaintenanceTask[]> {
+    return await db
+      .select()
+      .from(maintenanceTasks)
+      .where(eq(maintenanceTasks.maintenanceRecordId, recordId));
+  }
+
+  async updateMaintenanceTask(id: string, updates: Partial<InsertMaintenanceTask>): Promise<MaintenanceTask> {
+    const [updatedTask] = await db
+      .update(maintenanceTasks)
+      .set(updates)
+      .where(eq(maintenanceTasks.id, id))
+      .returning();
+    return updatedTask;
+  }
+
+  // Inventory operations
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const [newItem] = await db.insert(inventoryItems).values(item).returning();
+    return newItem;
+  }
+
+  async getAllInventoryItems(): Promise<InventoryItem[]> {
+    return await db.select().from(inventoryItems).where(eq(inventoryItems.isActive, true));
+  }
+
+  async updateInventoryItem(id: string, updates: Partial<InsertInventoryItem>): Promise<InventoryItem> {
+    const [updatedItem] = await db
+      .update(inventoryItems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(inventoryItems.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async getLowStockItems(): Promise<InventoryItem[]> {
+    return await db
+      .select()
+      .from(inventoryItems)
+      .where(and(
+        eq(inventoryItems.isActive, true),
+        sql`${inventoryItems.currentStock} <= ${inventoryItems.minimumStock}`
+      ));
   }
 }
 

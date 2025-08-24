@@ -7,6 +7,13 @@ import {
   insertVehicleSchema,
   insertTripSchema,
   insertAssignmentSchema,
+  insertFuelStationSchema,
+  insertFuelRecordSchema,
+  insertDriverChecklistSchema,
+  insertChecklistItemSchema,
+  insertMaintenanceRecordSchema,
+  insertMaintenanceTaskSchema,
+  insertInventoryItemSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -320,6 +327,385 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Fuel station routes
+  app.get('/api/fuel-stations', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const fuelStations = await storage.getAllFuelStations();
+      res.json(fuelStations);
+    } catch (error) {
+      console.error("Error fetching fuel stations:", error);
+      res.status(500).json({ message: "Failed to fetch fuel stations" });
+    }
+  });
+
+  app.post('/api/fuel-stations', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const fuelStationData = insertFuelStationSchema.parse(req.body);
+      const fuelStation = await storage.createFuelStation(fuelStationData);
+      res.status(201).json(fuelStation);
+    } catch (error) {
+      console.error("Error creating fuel station:", error);
+      res.status(500).json({ message: "Failed to create fuel station" });
+    }
+  });
+
+  // Fuel record routes
+  app.get('/api/fuel-records', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let fuelRecords;
+      if (user.role === 'driver') {
+        const driver = await storage.getDriverByUserId(userId);
+        if (!driver) {
+          return res.status(404).json({ message: "Driver profile not found" });
+        }
+        fuelRecords = await storage.getFuelRecordsByDriverId(driver.id);
+      } else {
+        fuelRecords = await storage.getAllFuelRecords();
+      }
+
+      res.json(fuelRecords);
+    } catch (error) {
+      console.error("Error fetching fuel records:", error);
+      res.status(500).json({ message: "Failed to fetch fuel records" });
+    }
+  });
+
+  app.post('/api/fuel-records', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const driver = await storage.getDriverByUserId(userId);
+      if (!driver) {
+        return res.status(404).json({ message: "Driver profile not found" });
+      }
+
+      // Get active assignment
+      const assignment = await storage.getActiveAssignmentByDriverId(driver.id);
+      if (!assignment) {
+        return res.status(400).json({ message: "No active vehicle assignment found" });
+      }
+
+      const fuelRecordData = insertFuelRecordSchema.parse({
+        ...req.body,
+        driverId: driver.id,
+        vehicleId: assignment.vehicleId,
+      });
+
+      const fuelRecord = await storage.createFuelRecord(fuelRecordData);
+      res.status(201).json(fuelRecord);
+    } catch (error) {
+      console.error("Error creating fuel record:", error);
+      res.status(500).json({ message: "Failed to create fuel record" });
+    }
+  });
+
+  // Driver checklist routes
+  app.get('/api/checklists', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let checklists;
+      if (user.role === 'driver') {
+        const driver = await storage.getDriverByUserId(userId);
+        if (!driver) {
+          return res.status(404).json({ message: "Driver profile not found" });
+        }
+        checklists = await storage.getChecklistsByDriverId(driver.id);
+      } else {
+        // For admin/manager, get all checklists - would need to add this method
+        checklists = [];
+      }
+
+      res.json(checklists);
+    } catch (error) {
+      console.error("Error fetching checklists:", error);
+      res.status(500).json({ message: "Failed to fetch checklists" });
+    }
+  });
+
+  app.post('/api/checklists', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const driver = await storage.getDriverByUserId(userId);
+      if (!driver) {
+        return res.status(404).json({ message: "Driver profile not found" });
+      }
+
+      // Get active assignment
+      const assignment = await storage.getActiveAssignmentByDriverId(driver.id);
+      if (!assignment) {
+        return res.status(400).json({ message: "No active vehicle assignment found" });
+      }
+
+      const checklistData = insertDriverChecklistSchema.parse({
+        ...req.body,
+        driverId: driver.id,
+        vehicleId: assignment.vehicleId,
+      });
+
+      const checklist = await storage.createDriverChecklist(checklistData);
+      res.status(201).json(checklist);
+    } catch (error) {
+      console.error("Error creating checklist:", error);
+      res.status(500).json({ message: "Failed to create checklist" });
+    }
+  });
+
+  app.patch('/api/checklists/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updates = {
+        ...req.body,
+        completedAt: req.body.status === 'completed' ? new Date() : undefined,
+      };
+
+      const updatedChecklist = await storage.updateDriverChecklist(id, updates);
+      res.json(updatedChecklist);
+    } catch (error) {
+      console.error("Error updating checklist:", error);
+      res.status(500).json({ message: "Failed to update checklist" });
+    }
+  });
+
+  // Checklist items routes
+  app.get('/api/checklists/:checklistId/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const { checklistId } = req.params;
+      const items = await storage.getChecklistItemsByChecklistId(checklistId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching checklist items:", error);
+      res.status(500).json({ message: "Failed to fetch checklist items" });
+    }
+  });
+
+  app.post('/api/checklists/:checklistId/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const { checklistId } = req.params;
+      const itemData = insertChecklistItemSchema.parse({
+        ...req.body,
+        checklistId,
+      });
+
+      const item = await storage.createChecklistItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating checklist item:", error);
+      res.status(500).json({ message: "Failed to create checklist item" });
+    }
+  });
+
+  app.patch('/api/checklist-items/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updatedItem = await storage.updateChecklistItem(id, req.body);
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating checklist item:", error);
+      res.status(500).json({ message: "Failed to update checklist item" });
+    }
+  });
+
+  // Maintenance record routes
+  app.get('/api/maintenance', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const maintenanceRecords = await storage.getAllMaintenanceRecords();
+      res.json(maintenanceRecords);
+    } catch (error) {
+      console.error("Error fetching maintenance records:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance records" });
+    }
+  });
+
+  app.post('/api/maintenance', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const maintenanceData = insertMaintenanceRecordSchema.parse(req.body);
+      const maintenanceRecord = await storage.createMaintenanceRecord(maintenanceData);
+      res.status(201).json(maintenanceRecord);
+    } catch (error) {
+      console.error("Error creating maintenance record:", error);
+      res.status(500).json({ message: "Failed to create maintenance record" });
+    }
+  });
+
+  app.patch('/api/maintenance/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+      const updates = {
+        ...req.body,
+        completedDate: req.body.status === 'completed' ? new Date() : undefined,
+      };
+
+      const updatedRecord = await storage.updateMaintenanceRecord(id, updates);
+      res.json(updatedRecord);
+    } catch (error) {
+      console.error("Error updating maintenance record:", error);
+      res.status(500).json({ message: "Failed to update maintenance record" });
+    }
+  });
+
+  // Maintenance task routes
+  app.get('/api/maintenance/:recordId/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const { recordId } = req.params;
+      const tasks = await storage.getMaintenanceTasksByRecordId(recordId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching maintenance tasks:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance tasks" });
+    }
+  });
+
+  app.post('/api/maintenance/:recordId/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { recordId } = req.params;
+      const taskData = insertMaintenanceTaskSchema.parse({
+        ...req.body,
+        maintenanceRecordId: recordId,
+      });
+
+      const task = await storage.createMaintenanceTask(taskData);
+      res.status(201).json(task);
+    } catch (error) {
+      console.error("Error creating maintenance task:", error);
+      res.status(500).json({ message: "Failed to create maintenance task" });
+    }
+  });
+
+  app.patch('/api/maintenance-tasks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+      const updatedTask = await storage.updateMaintenanceTask(id, req.body);
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error updating maintenance task:", error);
+      res.status(500).json({ message: "Failed to update maintenance task" });
+    }
+  });
+
+  // Inventory routes
+  app.get('/api/inventory', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const inventoryItems = await storage.getAllInventoryItems();
+      res.json(inventoryItems);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+      res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
+
+  app.post('/api/inventory', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const inventoryData = insertInventoryItemSchema.parse(req.body);
+      const inventoryItem = await storage.createInventoryItem(inventoryData);
+      res.status(201).json(inventoryItem);
+    } catch (error) {
+      console.error("Error creating inventory item:", error);
+      res.status(500).json({ message: "Failed to create inventory item" });
+    }
+  });
+
+  app.patch('/api/inventory/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+      const updatedItem = await storage.updateInventoryItem(id, req.body);
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating inventory item:", error);
+      res.status(500).json({ message: "Failed to update inventory item" });
+    }
+  });
+
+  app.get('/api/inventory/low-stock', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const lowStockItems = await storage.getLowStockItems();
+      res.json(lowStockItems);
+    } catch (error) {
+      console.error("Error fetching low stock items:", error);
+      res.status(500).json({ message: "Failed to fetch low stock items" });
     }
   });
 

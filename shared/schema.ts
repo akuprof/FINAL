@@ -38,6 +38,15 @@ export const payoutStatusEnum = pgEnum('payout_status', ['pending', 'approved', 
 // Vehicle status enum
 export const vehicleStatusEnum = pgEnum('vehicle_status', ['active', 'maintenance', 'inactive']);
 
+// Fuel record type enum
+export const fuelRecordTypeEnum = pgEnum('fuel_record_type', ['refuel', 'distribution', 'transfer']);
+
+// Maintenance status enum
+export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed', 'cancelled']);
+
+// Checklist status enum
+export const checklistStatusEnum = pgEnum('checklist_status', ['pending', 'completed', 'failed']);
+
 // User storage table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -153,6 +162,112 @@ export const documents = pgTable("documents", {
   expiryDate: timestamp("expiry_date"),
 });
 
+// Fuel stations table
+export const fuelStations = pgTable("fuel_stations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  location: text("location").notNull(),
+  contactPerson: varchar("contact_person"),
+  phone: varchar("phone"),
+  contractDetails: text("contract_details"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Fuel records table
+export const fuelRecords = pgTable("fuel_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").references(() => vehicles.id),
+  driverId: varchar("driver_id").references(() => drivers.id),
+  fuelStationId: varchar("fuel_station_id").references(() => fuelStations.id),
+  recordType: fuelRecordTypeEnum("record_type").notNull(),
+  fuelType: varchar("fuel_type").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  pricePerLiter: decimal("price_per_liter", { precision: 10, scale: 2 }).notNull(),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }).notNull(),
+  odometerReading: integer("odometer_reading"),
+  receiptNumber: varchar("receipt_number"),
+  notes: text("notes"),
+  refuelDate: timestamp("refuel_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Driver checklists table
+export const driverChecklists = pgTable("driver_checklists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").references(() => drivers.id),
+  vehicleId: varchar("vehicle_id").references(() => vehicles.id),
+  checklistType: varchar("checklist_type").notNull(), // 'pre_trip', 'post_trip', 'inventory', 'maintenance'
+  status: checklistStatusEnum("status").default('pending'),
+  completedAt: timestamp("completed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Checklist items table
+export const checklistItems = pgTable("checklist_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  checklistId: varchar("checklist_id").references(() => driverChecklists.id),
+  itemName: varchar("item_name").notNull(),
+  itemCategory: varchar("item_category").notNull(), // 'safety', 'inventory', 'maintenance', 'documentation'
+  isChecked: boolean("is_checked").default(false),
+  condition: varchar("condition"), // 'good', 'fair', 'poor', 'needs_attention'
+  quantity: integer("quantity"),
+  notes: text("notes"),
+  imageUrl: varchar("image_url"),
+});
+
+// Maintenance records table
+export const maintenanceRecords = pgTable("maintenance_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").references(() => vehicles.id),
+  maintenanceType: varchar("maintenance_type").notNull(), // 'scheduled', 'repair', 'inspection', 'service'
+  description: text("description").notNull(),
+  status: maintenanceStatusEnum("status").default('scheduled'),
+  scheduledDate: timestamp("scheduled_date"),
+  completedDate: timestamp("completed_date"),
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+  serviceProvider: varchar("service_provider"),
+  odometerReading: integer("odometer_reading"),
+  nextServiceDue: timestamp("next_service_due"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Maintenance tasks table
+export const maintenanceTasks = pgTable("maintenance_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  maintenanceRecordId: varchar("maintenance_record_id").references(() => maintenanceRecords.id),
+  taskName: varchar("task_name").notNull(),
+  description: text("description"),
+  isCompleted: boolean("is_completed").default(false),
+  assignedTo: varchar("assigned_to"),
+  completedBy: varchar("completed_by"),
+  estimatedDuration: integer("estimated_duration"), // in minutes
+  actualDuration: integer("actual_duration"), // in minutes
+  partsUsed: text("parts_used"), // JSON string of parts
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+});
+
+// Inventory items table
+export const inventoryItems = pgTable("inventory_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  itemName: varchar("item_name").notNull(),
+  itemCode: varchar("item_code").unique(),
+  category: varchar("category").notNull(), // 'spare_parts', 'tools', 'safety_equipment', 'consumables'
+  currentStock: integer("current_stock").default(0),
+  minimumStock: integer("minimum_stock").default(0),
+  maxStock: integer("max_stock"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+  location: varchar("location"),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   driver: one(drivers, {
@@ -172,6 +287,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
   payouts: many(payouts),
   incidents: many(incidents),
   documents: many(documents),
+  fuelRecords: many(fuelRecords),
+  driverChecklists: many(driverChecklists),
 }));
 
 export const vehiclesRelations = relations(vehicles, ({ many }) => ({
@@ -179,6 +296,9 @@ export const vehiclesRelations = relations(vehicles, ({ many }) => ({
   trips: many(trips),
   incidents: many(incidents),
   documents: many(documents),
+  fuelRecords: many(fuelRecords),
+  maintenanceRecords: many(maintenanceRecords),
+  driverChecklists: many(driverChecklists),
 }));
 
 export const assignmentsRelations = relations(assignments, ({ one }) => ({
@@ -235,6 +355,59 @@ export const incidentsRelations = relations(incidents, ({ one }) => ({
   }),
 }));
 
+export const fuelStationsRelations = relations(fuelStations, ({ many }) => ({
+  fuelRecords: many(fuelRecords),
+}));
+
+export const fuelRecordsRelations = relations(fuelRecords, ({ one }) => ({
+  vehicle: one(vehicles, {
+    fields: [fuelRecords.vehicleId],
+    references: [vehicles.id],
+  }),
+  driver: one(drivers, {
+    fields: [fuelRecords.driverId],
+    references: [drivers.id],
+  }),
+  fuelStation: one(fuelStations, {
+    fields: [fuelRecords.fuelStationId],
+    references: [fuelStations.id],
+  }),
+}));
+
+export const driverChecklistsRelations = relations(driverChecklists, ({ one, many }) => ({
+  driver: one(drivers, {
+    fields: [driverChecklists.driverId],
+    references: [drivers.id],
+  }),
+  vehicle: one(vehicles, {
+    fields: [driverChecklists.vehicleId],
+    references: [vehicles.id],
+  }),
+  checklistItems: many(checklistItems),
+}));
+
+export const checklistItemsRelations = relations(checklistItems, ({ one }) => ({
+  checklist: one(driverChecklists, {
+    fields: [checklistItems.checklistId],
+    references: [driverChecklists.id],
+  }),
+}));
+
+export const maintenanceRecordsRelations = relations(maintenanceRecords, ({ one, many }) => ({
+  vehicle: one(vehicles, {
+    fields: [maintenanceRecords.vehicleId],
+    references: [vehicles.id],
+  }),
+  maintenanceTasks: many(maintenanceTasks),
+}));
+
+export const maintenanceTasksRelations = relations(maintenanceTasks, ({ one }) => ({
+  maintenanceRecord: one(maintenanceRecords, {
+    fields: [maintenanceTasks.maintenanceRecordId],
+    references: [maintenanceRecords.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -279,6 +452,42 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
   uploadedAt: true,
 });
 
+export const insertFuelStationSchema = createInsertSchema(fuelStations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFuelRecordSchema = createInsertSchema(fuelRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDriverChecklistSchema = createInsertSchema(driverChecklists).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChecklistItemSchema = createInsertSchema(checklistItems).omit({
+  id: true,
+});
+
+export const insertMaintenanceRecordSchema = createInsertSchema(maintenanceRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMaintenanceTaskSchema = createInsertSchema(maintenanceTasks).omit({
+  id: true,
+});
+
+export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -304,3 +513,24 @@ export type InsertIncident = z.infer<typeof insertIncidentSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+export type FuelStation = typeof fuelStations.$inferSelect;
+export type InsertFuelStation = z.infer<typeof insertFuelStationSchema>;
+
+export type FuelRecord = typeof fuelRecords.$inferSelect;
+export type InsertFuelRecord = z.infer<typeof insertFuelRecordSchema>;
+
+export type DriverChecklist = typeof driverChecklists.$inferSelect;
+export type InsertDriverChecklist = z.infer<typeof insertDriverChecklistSchema>;
+
+export type ChecklistItem = typeof checklistItems.$inferSelect;
+export type InsertChecklistItem = z.infer<typeof insertChecklistItemSchema>;
+
+export type MaintenanceRecord = typeof maintenanceRecords.$inferSelect;
+export type InsertMaintenanceRecord = z.infer<typeof insertMaintenanceRecordSchema>;
+
+export type MaintenanceTask = typeof maintenanceTasks.$inferSelect;
+export type InsertMaintenanceTask = z.infer<typeof insertMaintenanceTaskSchema>;
+
+export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
