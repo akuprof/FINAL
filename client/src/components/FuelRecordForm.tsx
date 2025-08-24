@@ -11,7 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertFuelRecordSchema, type InsertFuelRecord } from "@shared/schema";
-import { Fuel } from "lucide-react";
+import { Fuel, Save, Calculator } from "lucide-react";
+import { ImageUploader } from "./ImageUploader";
 
 export function FuelRecordForm() {
   const { toast } = useToast();
@@ -225,14 +226,28 @@ export function FuelRecordForm() {
 
             <Button
               type="submit"
-              className="w-full"
               disabled={mutation.isPending}
+              className="w-full"
               data-testid="button-submit-fuel-record"
             >
               {mutation.isPending ? "Logging..." : "Log Fuel Record"}
             </Button>
           </form>
         </Form>
+
+        {/* Image Upload Section */}
+        <div className="mt-6 pt-6 border-t">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            Attach Receipt/Bill Images
+          </h4>
+          <ImageUploader
+            entityId="temp-fuel-record"
+            entityType="fuel-record"
+            documentType="receipt"
+            maxFiles={3}
+            acceptedTypes={['image/*', '.pdf']}
+          />
+        </div>
       </CardContent>
     </Card>
   );

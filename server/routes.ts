@@ -14,13 +14,51 @@ import {
   insertMaintenanceRecordSchema,
   insertMaintenanceTaskSchema,
   insertInventoryItemSchema,
+  insertDocumentSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
+import { existsSync, mkdirSync } from "fs";
 
 // Payout calculation formula
 function calculatePayout(revenue: number): number {
   return Math.min(revenue, 2250) * 0.30 + Math.max(revenue - 2250, 0) * 0.70;
 }
+
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!existsSync(uploadDir)) {
+  mkdirSync(uploadDir, { recursive: true });
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 5 // Maximum 5 files per upload
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only images, PDFs, and documents are allowed'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -722,6 +760,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching low stock items:", error);
       res.status(500).json({ message: "Failed to fetch low stock items" });
+    }
+  });
+
+  // Document upload route
+  app.post('/api/documents/upload', isAuthenticated, upload.array('files', 5), async (req: any, res) => {
+    try {
+      const { entityId, entityType, documentType } = req.body;
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const documents = [];
+      for (const file of files) {
+        const document = await storage.createDocument({
+          entityId,
+          entityType,
+          documentType,
+          fileName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+        });
+        documents.push(document);
+      }
+
+      res.status(201).json({ documents });
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      res.status(500).json({ message: "Failed to upload documents" });
+    }
+  });
+
+  // Get documents by entity
+  app.get('/api/documents/:entityType/:entityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { entityId, entityType } = req.params;
+      const documents = await storage.getDocumentsByEntity(entityId, entityType);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  // View document
+  app.get('/api/documents/:id/view', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocument(id);
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Check if file exists
+      const fileExists = existsSync(document.filePath);
+      if (!fileExists) {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      // Set appropriate content type
+      const ext = path.extname(document.fileName).toLowerCase();
+      let contentType = 'application/octet-stream';
+      
+      if (['.jpg', '.jpeg'].includes(ext)) contentType = 'image/jpeg';
+      else if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.gif') contentType = 'image/gif';
+      else if (ext === '.pdf') contentType = 'application/pdf';
+      else if (['.doc', '.docx'].includes(ext)) contentType = 'application/msword';
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+      res.sendFile(path.resolve(document.filePath));
+    } catch (error) {
+      console.error("Error viewing document:", error);
+      res.status(500).json({ message: "Failed to view document" });
+    }
+  });
+
+  // Download document
+  app.get('/api/documents/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocument(id);
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Check if file exists
+      const fileExists = existsSync(document.filePath);
+      if (!fileExists) {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      res.sendFile(path.resolve(document.filePath));
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      res.status(500).json({ message: "Failed to download document" });
+    }
+  });
+
+  // Delete document
+  app.delete('/api/documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocument(id);
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Delete file from disk
+      try {
+        await fs.unlink(document.filePath);
+      } catch (error) {
+        console.warn("File not found on disk, continuing with database deletion");
+      }
+
+      // Delete from database
+      await storage.deleteDocument(id);
+      
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "Failed to delete document" });
     }
   });
 

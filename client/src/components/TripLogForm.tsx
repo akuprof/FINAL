@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ImageUploader } from "./ImageUploader";
 
 export function TripLogForm() {
   const [formData, setFormData] = useState({
@@ -232,6 +233,20 @@ export function TripLogForm() {
             )}
           </Button>
         </form>
+
+        {/* Image Upload Section */}
+        <div className="mt-6 pt-6 border-t">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            Attach Trip Documents/Images
+          </h4>
+          <ImageUploader
+            entityId="temp-trip"
+            entityType="trip"
+            documentType="trip-document"
+            maxFiles={5}
+            acceptedTypes={['image/*', '.pdf', '.doc', '.docx']}
+          />
+        </div>
       </CardContent>
     </Card>
   );

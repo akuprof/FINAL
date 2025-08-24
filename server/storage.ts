@@ -132,6 +132,10 @@ export interface IStorage {
 
   // New method to get all users
   getAllUsers(): Promise<User[]>;
+
+  // Document operations
+  getDocument(id: string): Promise<Document | undefined>;
+  deleteDocument(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -505,6 +509,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(users.createdAt);
 
     return result;
+  }
+
+  // Document operations
+  async getDocument(id: string): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document;
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
   }
 }
 

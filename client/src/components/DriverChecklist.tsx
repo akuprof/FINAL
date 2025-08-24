@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertDriverChecklistSchema, type InsertDriverChecklist } from "@shared/schema";
 import { ClipboardList, Plus, Check, X, Clock } from "lucide-react";
+import { ImageUploader } from "./ImageUploader";
 
 interface ChecklistItemType {
   id: string;
