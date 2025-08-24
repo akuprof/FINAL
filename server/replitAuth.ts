@@ -2,6 +2,10 @@
 import type { Express, RequestHandler } from "express";
 import { createClient } from '@supabase/supabase-js';
 import { storage } from "./storage";
+import { config } from "dotenv";
+
+// Load environment variables
+config();
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
