@@ -14,7 +14,7 @@ import { DriverDashboard } from "./components/DriverDashboard";
 import { DriverManagement } from "./components/DriverManagement";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
@@ -24,11 +24,11 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/admin" component={() => (
-          user?.role === 'admin' ? <AdminDashboard /> : <Home />
-        )} />
-        <Route path="/drivers" component={() => (
-          user?.role === 'admin' ? <DriverManagement /> : <Home />
-        )} />
+            user?.role === 'admin' ? <AdminDashboard /> : <Home />
+          )} />
+          <Route path="/drivers" component={() => (
+            user?.role === 'admin' ? <DriverManagement /> : <Home />
+          )} />
           {/* Add more protected routes here as needed */}
         </>
       )}
