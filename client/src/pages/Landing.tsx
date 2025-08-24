@@ -40,7 +40,10 @@ export default function Landing() {
           </div>
 
           <Button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => {
+              // You can implement a sign-in modal here or redirect to a sign-in page
+              console.log("Sign in with Supabase");
+            }}
             className="w-full bg-primary hover:bg-primary-dark text-white"
             data-testid="login-button"
           >

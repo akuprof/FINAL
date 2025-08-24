@@ -1,3 +1,4 @@
+
 import {
   users,
   drivers,
@@ -45,13 +46,14 @@ import {
   type InventoryItem,
   type InsertInventoryItem,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, supabase } from "./db";
 import { eq, desc, and, isNull, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
 
   // Driver operations
   getDriver(id: string): Promise<Driver | undefined>;
@@ -91,6 +93,7 @@ export interface IStorage {
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByEntity(entityId: string, entityType: string): Promise<Document[]>;
+  uploadFile(file: Buffer, path: string): Promise<string>;
 
   // Fuel station operations
   createFuelStation(fuelStation: InsertFuelStation): Promise<FuelStation>;
@@ -129,13 +132,6 @@ export interface IStorage {
   getAllInventoryItems(): Promise<InventoryItem[]>;
   updateInventoryItem(id: string, updates: Partial<InsertInventoryItem>): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItem[]>;
-
-  // New method to get all users
-  getAllUsers(): Promise<User[]>;
-
-  // Document operations
-  getDocument(id: string): Promise<Document | undefined>;
-  deleteDocument(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -158,6 +154,30 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.createdAt);
+  }
+
+  // File upload using Supabase Storage
+  async uploadFile(file: Buffer, path: string): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
   }
 
   // Driver operations
@@ -499,26 +519,6 @@ export class DatabaseStorage implements IStorage {
         eq(inventoryItems.isActive, true),
         sql`${inventoryItems.currentStock} <= ${inventoryItems.minimumStock}`
       ));
-  }
-
-  // Added method to get all users
-  async getAllUsers(): Promise<User[]> {
-    const result = await db
-      .select()
-      .from(users)
-      .orderBy(users.createdAt);
-
-    return result;
-  }
-
-  // Document operations
-  async getDocument(id: string): Promise<Document | undefined> {
-    const [document] = await db.select().from(documents).where(eq(documents.id, id));
-    return document;
-  }
-
-  async deleteDocument(id: string): Promise<void> {
-    await db.delete(documents).where(eq(documents.id, id));
   }
 }
 

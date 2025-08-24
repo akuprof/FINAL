@@ -86,6 +86,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File upload endpoint using Supabase Storage
+  app.post('/api/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const file = req.files.file;
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `uploads/${fileName}`;
+
+      const publicUrl = await storage.uploadFile(file.data, filePath);
+      
+      res.json({ 
+        message: "File uploaded successfully", 
+        url: publicUrl,
+        fileName: fileName 
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
   // Users routes
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
