@@ -1,0 +1,62 @@
+🚍 PLS Travels Fleet Management System
+A comprehensive fleet management system built with Next.js, Supabase, and shadcn/ui for managing drivers, vehicles, trips, and payouts.
+
+🚀 Features
+Core Modules
+Authentication & Authorization - Role-based access control (Admin, Manager, Driver)
+Driver Management - Complete HR system for driver onboarding and management
+Vehicle Management - Fleet catalog with maintenance tracking
+Assignment Management - Driver-vehicle assignment system
+Shift Planning - Daily shift scheduling and rotation
+Trip Logging - Manual trip entry with revenue tracking
+Payout Management - Automated payout calculation with approval workflow
+Incident Management - Accident reporting and deduction tracking
+Document Management - License, insurance, and permit tracking
+Reporting & Analytics - Comprehensive business intelligence
+Business Logic
+Smart Payout Formula: pay = min(revenue, 2250) * 0.30 + max(revenue - 2250, 0) * 0.70
+Role-based Dashboards with different views for Admin, Manager, and Driver
+Mobile-first Driver Experience optimized for smartphones
+Real-time Notifications (in-app + email only)
+
+🎯 User Roles & Access
+Admin Dashboard
+Full System Access: Manage users, drivers, vehicles, and system settings
+Financial Overview: Revenue tracking, payout approvals, cost analysis
+Fleet Management: Vehicle maintenance, driver assignments, incident handling
+System Administration: User roles, permissions, system configuration
+Manager Dashboard
+Operations Management: Trip monitoring, payout approvals, driver oversight
+Performance Analytics: Revenue tracking, driver performance, fleet utilization
+Incident Management: Review and process accident reports and deductions
+Approval Workflows: Payout approvals, expense approvals, incident resolutions
+Driver Dashboard (Mobile-First)
+Trip Logging: Manual trip entry with pickup/drop locations and earnings
+Earnings Tracker: Real-time payout calculations and target progress
+Document Management: Upload and manage licenses, permits, and certificates
+Shift Management: View assigned shifts and vehicle information
+📊 Database Schema
+The system uses a comprehensive PostgreSQL schema with the following key entities:
+
+Users & Roles: Authentication and authorization
+Drivers: Driver profiles, licenses, and contact information
+Vehicles: Fleet catalog with maintenance tracking
+Assignments: Driver-vehicle pairings
+Shifts: Daily work schedules
+Trips: Individual trip records with revenue data
+Payouts: Calculated earnings with approval workflow
+Incidents: Accident reports and deductions
+Documents: File storage for licenses and permits
+🔐 Security Features
+Row Level Security (RLS): Database-level access control
+Role-based Authentication: Secure user roles and permissions
+Session Management: Automatic session refresh and security
+Data Validation: Input sanitization and validation
+Audit Trail: Comprehensive logging of all system actions
+📱 Mobile Optimization
+The driver interface is specifically optimized for mobile devices:
+
+Responsive Design: Mobile-first approach with touch-friendly interfaces
+Progressive Web App: Can be installed on mobile devices
+Offline Support: Basic functionality works without internet connection
+Touch Gestures: Optimized for smartphone usage patterns
