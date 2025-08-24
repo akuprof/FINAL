@@ -52,83 +52,86 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Driver operations
   getDriver(id: string): Promise<Driver | undefined>;
   getDriverByUserId(userId: string): Promise<Driver | undefined>;
   createDriver(driver: InsertDriver): Promise<Driver>;
   updateDriver(id: string, updates: Partial<InsertDriver>): Promise<Driver>;
   getAllDrivers(): Promise<Driver[]>;
-  
+
   // Vehicle operations
   getVehicle(id: string): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(id: string, updates: Partial<InsertVehicle>): Promise<Vehicle>;
   getAllVehicles(): Promise<Vehicle[]>;
-  
+
   // Assignment operations
   createAssignment(assignment: InsertAssignment): Promise<Assignment>;
   getActiveAssignmentByDriverId(driverId: string): Promise<Assignment | undefined>;
   deactivateAssignment(assignmentId: string): Promise<void>;
-  
+
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
   updateTrip(id: string, updates: Partial<InsertTrip>): Promise<Trip>;
   getTripsByDriverId(driverId: string): Promise<Trip[]>;
   getAllTrips(): Promise<Trip[]>;
   getTrip(id: string): Promise<Trip | undefined>;
-  
+
   // Payout operations
   createPayout(payout: InsertPayout): Promise<Payout>;
   updatePayout(id: string, updates: Partial<InsertPayout>): Promise<Payout>;
   getPendingPayouts(): Promise<Payout[]>;
   getPayoutsByDriverId(driverId: string): Promise<Payout[]>;
-  
+
   // Incident operations
   createIncident(incident: InsertIncident): Promise<Incident>;
   getAllIncidents(): Promise<Incident[]>;
-  
+
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByEntity(entityId: string, entityType: string): Promise<Document[]>;
-  
+
   // Fuel station operations
   createFuelStation(fuelStation: InsertFuelStation): Promise<FuelStation>;
   getAllFuelStations(): Promise<FuelStation[]>;
   updateFuelStation(id: string, updates: Partial<InsertFuelStation>): Promise<FuelStation>;
-  
+
   // Fuel record operations
   createFuelRecord(fuelRecord: InsertFuelRecord): Promise<FuelRecord>;
   getFuelRecordsByVehicleId(vehicleId: string): Promise<FuelRecord[]>;
   getFuelRecordsByDriverId(driverId: string): Promise<FuelRecord[]>;
   getAllFuelRecords(): Promise<FuelRecord[]>;
-  
+
   // Driver checklist operations
   createDriverChecklist(checklist: InsertDriverChecklist): Promise<DriverChecklist>;
   getChecklistsByDriverId(driverId: string): Promise<DriverChecklist[]>;
   updateDriverChecklist(id: string, updates: Partial<InsertDriverChecklist>): Promise<DriverChecklist>;
-  
+
   // Checklist item operations
   createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem>;
   getChecklistItemsByChecklistId(checklistId: string): Promise<ChecklistItem[]>;
   updateChecklistItem(id: string, updates: Partial<InsertChecklistItem>): Promise<ChecklistItem>;
-  
+
   // Maintenance record operations
   createMaintenanceRecord(record: InsertMaintenanceRecord): Promise<MaintenanceRecord>;
   getMaintenanceRecordsByVehicleId(vehicleId: string): Promise<MaintenanceRecord[]>;
   getAllMaintenanceRecords(): Promise<MaintenanceRecord[]>;
   updateMaintenanceRecord(id: string, updates: Partial<InsertMaintenanceRecord>): Promise<MaintenanceRecord>;
-  
+
   // Maintenance task operations
   createMaintenanceTask(task: InsertMaintenanceTask): Promise<MaintenanceTask>;
   getMaintenanceTasksByRecordId(recordId: string): Promise<MaintenanceTask[]>;
   updateMaintenanceTask(id: string, updates: Partial<InsertMaintenanceTask>): Promise<MaintenanceTask>;
-  
+
   // Inventory operations
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   getAllInventoryItems(): Promise<InventoryItem[]>;
   updateInventoryItem(id: string, updates: Partial<InsertInventoryItem>): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItem[]>;
+
+  // New method to get all users
+  getAllUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -492,6 +495,16 @@ export class DatabaseStorage implements IStorage {
         eq(inventoryItems.isActive, true),
         sql`${inventoryItems.currentStock} <= ${inventoryItems.minimumStock}`
       ));
+  }
+
+  // Added method to get all users
+  async getAllUsers(): Promise<User[]> {
+    const result = await db
+      .select()
+      .from(users)
+      .orderBy(users.createdAt);
+
+    return result;
   }
 }
 

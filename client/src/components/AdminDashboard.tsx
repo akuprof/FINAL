@@ -237,9 +237,10 @@ export function AdminDashboard() {
                 variant="outline" 
                 className="w-full justify-start" 
                 data-testid="action-add-driver"
+                onClick={() => window.location.href = "/drivers"}
               >
                 <i className="fas fa-user-plus mr-3 text-primary"></i>
-                Add New Driver
+                Manage Drivers
               </Button>
               <Button 
                 variant="outline" 

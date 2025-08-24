@@ -8,6 +8,10 @@ import { Layout } from "@/components/Layout";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
+import { AdminDashboard } from "./components/AdminDashboard";
+import { ManagerDashboard } from "./components/ManagerDashboard";
+import { DriverDashboard } from "./components/DriverDashboard";
+import { DriverManagement } from "./components/DriverManagement";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,6 +23,12 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/admin" component={() => (
+          user?.role === 'admin' ? <AdminDashboard /> : <Home />
+        )} />
+        <Route path="/drivers" component={() => (
+          user?.role === 'admin' ? <DriverManagement /> : <Home />
+        )} />
           {/* Add more protected routes here as needed */}
         </>
       )}
