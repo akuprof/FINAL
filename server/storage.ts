@@ -1,4 +1,3 @@
-
 import {
   users,
   drivers,
@@ -48,6 +47,7 @@ import {
 } from "@shared/schema";
 import { db, supabase } from "./db";
 import { eq, desc, and, isNull, sql } from "drizzle-orm";
+import type { UploadedFile } from 'express-fileupload';
 
 export interface IStorage {
   // User operations
