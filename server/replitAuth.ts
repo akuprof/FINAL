@@ -7,20 +7,15 @@ import { config } from "dotenv";
 // Load environment variables from .env.local
 config({ path: '.env.local' });
 
-// For local development, allow missing Supabase credentials
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn("⚠️  Supabase credentials not set. Auth will be disabled for local development.");
-}
+// Supabase configuration
+const SUPABASE_URL = 'https://lcmxoxiafeeqjxbnwlic.supabase.co'
+const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjbXhveGlhZmVlcWp4Ym53bGljIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjA2MTM3NiwiZXhwIjoyMDcxNjM3Mzc2fQ.CKaJnsgp4E5Xn-G99TPPeFhVCh2RlsaEorvlqRQpxDA'
 
 // Create a server client for Express.js
 export const createSupabaseServerClient = (req: any) => {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return null;
-  }
-
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
     {
       cookies: {
         getAll() {
@@ -49,26 +44,18 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const supabase = createSupabaseServerClient(req);
-  
-  // For local development without Supabase, allow all requests
-  if (!supabase) {
-    console.warn("⚠️  Auth disabled for local development");
-    (req as any).user = { claims: { sub: 'local-dev-user' } };
-    return next();
-  }
 
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const token = authHeader.substring(7);
-  
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Get session from cookies
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (error || !user) {
+    if (sessionError || !session) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(session.access_token);
+    
+    if (userError || !user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 

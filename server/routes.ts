@@ -93,9 +93,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const supabase = createSupabaseServerClient(req);
-      if (!supabase) {
-        return res.status(500).json({ message: "Authentication service unavailable" });
-      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -142,9 +139,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const supabase = createSupabaseServerClient(req);
-      if (!supabase) {
-        return res.status(500).json({ message: "Authentication service unavailable" });
-      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -168,9 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/logout', async (req, res) => {
     try {
       const supabase = createSupabaseServerClient(req);
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
+      await supabase.auth.signOut();
 
       // Clear cookies
       res.clearCookie('sb-access-token');
@@ -186,9 +178,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/verify', async (req, res) => {
     try {
       const supabase = createSupabaseServerClient(req);
-      if (!supabase) {
-        return res.status(500).json({ message: "Authentication service unavailable" });
-      }
 
       // Get the session from cookies
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
