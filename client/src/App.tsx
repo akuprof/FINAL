@@ -13,7 +13,7 @@ import { ManagerDashboard } from "./components/ManagerDashboard";
 import { DriverDashboard } from "./components/DriverDashboard";
 import { DriverManagement } from "./components/DriverManagement";
 
-// Force redeploy with Supabase fix
+// Force redeploy with Supabase fix - updated
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
