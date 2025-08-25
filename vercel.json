@@ -4,7 +4,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://final-1-9eun.onrender.com/api/$1"
+      "dest": "https://final-1-9eun.onrender.com"
     }
   ],
   "headers": [
