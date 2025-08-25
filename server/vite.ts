@@ -3,7 +3,35 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+const viteConfig = defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(process.cwd(), "client", "src"),
+      "@shared": path.resolve(process.cwd(), "shared"),
+      "@assets": path.resolve(process.cwd(), "attached_assets"),
+    },
+  },
+  root: path.resolve(process.cwd(), "client"),
+  build: {
+    outDir: path.resolve(process.cwd(), "dist/public"),
+    emptyOutDir: true,
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      "/api": "http://localhost:5000"
+    },
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
+  },
+});
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
