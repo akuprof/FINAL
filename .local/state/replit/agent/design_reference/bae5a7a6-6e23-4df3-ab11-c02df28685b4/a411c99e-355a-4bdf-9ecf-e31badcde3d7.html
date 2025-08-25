@@ -1,0 +1,695 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLS Travels Fleet Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'roboto': ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#1976D2',
+                        'primary-dark': '#1565C0',
+                        'secondary': '#424242',
+                        'surface': '#FFFFFF',
+                        'background': '#FAFAFA',
+                        'success': '#4CAF50',
+                        'warning': '#FF9800',
+                        'error': '#F44336',
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="font-roboto bg-background min-h-screen">
+    <!-- @COMPONENT: AppLayout -->
+    <div id="app" class="min-h-screen">
+        
+        <!-- Navigation Bar -->
+        <!-- @COMPONENT: NavigationBar [role, user] -->
+        <nav class="bg-surface shadow-md border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-xl font-semibold text-primary">
+                            <i class="fas fa-bus mr-2"></i>
+                            PLS Travels
+                        </div>
+                        
+                        <!-- Role Switcher for Demo -->
+                        <div class="hidden md:block">
+                            <select id="roleSelector" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="admin">Admin View</option>
+                                <option value="manager">Manager View</option>
+                                <option value="driver">Driver View</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Notifications -->
+                        <button class="relative p-2 text-gray-600 hover:text-primary">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute -top-1 -right-1 bg-error text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                        </button>
+                        
+                        <!-- User Menu -->
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                JD
+                            </div>
+                            <span class="hidden md:block text-sm font-medium text-gray-700" data-bind="user.name">John Doe</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: NavigationBar -->
+
+        <div class="flex">
+            <!-- Sidebar Navigation -->
+            <!-- @COMPONENT: Sidebar [role] -->
+            <aside id="sidebar" class="w-64 bg-surface min-h-screen shadow-sm border-r border-gray-200 hidden lg:block">
+                <div class="p-4">
+                    <!-- Admin Navigation -->
+                    <nav id="adminNav" class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Admin Dashboard</div>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-primary bg-blue-50 rounded-md">
+                            <i class="fas fa-tachometer-alt mr-3 text-sm"></i>
+                            Overview
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-users mr-3 text-sm"></i>
+                            Drivers
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-car mr-3 text-sm"></i>
+                            Vehicles
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-route mr-3 text-sm"></i>
+                            Trips
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-money-bill-wave mr-3 text-sm"></i>
+                            Payouts
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-exclamation-triangle mr-3 text-sm"></i>
+                            Incidents
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-chart-line mr-3 text-sm"></i>
+                            Reports
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">
+                            <i class="fas fa-cog mr-3 text-sm"></i>
+                            Settings
+                        </a>
+                    </nav>
+                </div>
+            </aside>
+            <!-- @END_COMPONENT: Sidebar -->
+
+            <!-- Main Content Area -->
+            <main class="flex-1 p-4 lg:p-6 max-w-full overflow-x-hidden">
+                
+                <!-- Admin Dashboard View -->
+                <!-- @COMPONENT: AdminDashboard -->
+                <div id="adminDashboard">
+                    <!-- Header -->
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Fleet Management Overview</h1>
+                        <p class="text-gray-600">Monitor your fleet operations and performance metrics</p>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- @MAP: stats.map(stat => ( -->
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Active Drivers</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="stats.activeDrivers">42</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-users text-primary text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-success">+12%</span>
+                                <span class="text-gray-500 ml-2">from last month</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Fleet Size</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="stats.fleetSize">38</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-car text-success text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-success">+2</span>
+                                <span class="text-gray-500 ml-2">new vehicles</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Daily Revenue</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="stats.dailyRevenue">₹45,680</p>
+                                </div>
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-rupee-sign text-warning text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-success">+8%</span>
+                                <span class="text-gray-500 ml-2">vs yesterday</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Pending Payouts</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="stats.pendingPayouts">₹12,450</p>
+                                </div>
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-circle text-error text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-gray-500">15 drivers</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+
+                    <!-- Recent Activity and Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Recent Trips -->
+                        <div class="lg:col-span-2 bg-surface rounded-lg shadow-sm border border-gray-200">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Trips</h3>
+                            </div>
+                            <div class="overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <!-- @MAP: recentTrips.map(trip => ( -->
+                                        <tr data-mock="true">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">RP</div>
+                                                    <div class="ml-3">
+                                                        <div class="text-sm font-medium text-gray-900" data-bind="trip.driverName">Rajesh Patel</div>
+                                                        <div class="text-sm text-gray-500" data-bind="trip.vehicleNumber">HR-26-AB-1234</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900" data-bind="trip.route">Delhi → Chandigarh</div>
+                                                <div class="text-sm text-gray-500" data-bind="trip.time">2 hours ago</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="trip.revenue">₹2,850</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-success" data-bind="trip.status">Completed</span>
+                                            </td>
+                                        </tr>
+                                        <tr data-mock="true">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">AK</div>
+                                                    <div class="ml-3">
+                                                        <div class="text-sm font-medium text-gray-900">Amit Kumar</div>
+                                                        <div class="text-sm text-gray-500">DL-8C-XY-5678</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Mumbai → Pune</div>
+                                                <div class="text-sm text-gray-500">4 hours ago</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹1,950</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-success">Completed</span>
+                                            </td>
+                                        </tr>
+                                        <tr data-mock="true">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">VS</div>
+                                                    <div class="ml-3">
+                                                        <div class="text-sm font-medium text-gray-900">Vikram Singh</div>
+                                                        <div class="text-sm text-gray-500">UP-32-BC-9012</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Bangalore → Chennai</div>
+                                                <div class="text-sm text-gray-500">1 hour ago</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹3,200</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-warning">In Progress</span>
+                                            </td>
+                                        </tr>
+                                        <!-- @END_MAP )) -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" data-event="click:addDriver">
+                                    <i class="fas fa-user-plus mr-3 text-primary"></i>
+                                    Add New Driver
+                                </button>
+                                <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" data-event="click:addVehicle">
+                                    <i class="fas fa-plus-circle mr-3 text-primary"></i>
+                                    Register Vehicle
+                                </button>
+                                <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" data-event="click:viewReports">
+                                    <i class="fas fa-chart-bar mr-3 text-primary"></i>
+                                    Generate Report
+                                </button>
+                                <button class="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors" data-event="click:approvePayouts">
+                                    <i class="fas fa-check-circle mr-3 text-primary"></i>
+                                    Approve Payouts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: AdminDashboard -->
+
+                <!-- Manager Dashboard View (Hidden by default) -->
+                <!-- @COMPONENT: ManagerDashboard -->
+                <div id="managerDashboard" class="hidden">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Operations Management</h1>
+                        <p class="text-gray-600">Monitor daily operations and manage driver performance</p>
+                    </div>
+
+                    <!-- Payout Approval Section -->
+                    <div class="bg-surface rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Pending Payout Approvals</h3>
+                        </div>
+                        <div class="p-6">
+                            <!-- @MAP: pendingPayouts.map(payout => ( -->
+                            <div class="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4" data-mock="true">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-medium">RP</div>
+                                    <div>
+                                        <div class="font-medium text-gray-900" data-bind="payout.driverName">Rajesh Patel</div>
+                                        <div class="text-sm text-gray-500">Trip Revenue: <span data-bind="payout.revenue">₹2,850</span> • Calculated Payout: <span data-bind="payout.calculatedAmount">₹855</span></div>
+                                        <div class="text-xs text-gray-400" data-bind="payout.formula">Formula: min(2850, 2250) * 0.30 + max(2850 - 2250, 0) * 0.70 = ₹855</div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="px-4 py-2 bg-success text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors" data-event="click:approvePayout">
+                                        <i class="fas fa-check mr-1"></i>
+                                        Approve
+                                    </button>
+                                    <button class="px-4 py-2 bg-error text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors" data-event="click:rejectPayout">
+                                        <i class="fas fa-times mr-1"></i>
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performers This Week</h3>
+                            <div class="space-y-4">
+                                <!-- @MAP: topPerformers.map(performer => ( -->
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">AK</div>
+                                        <div>
+                                            <div class="font-medium text-gray-900" data-bind="performer.name">Amit Kumar</div>
+                                            <div class="text-sm text-gray-500" data-bind="performer.trips">12 trips completed</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-semibold text-gray-900" data-bind="performer.revenue">₹28,400</div>
+                                        <div class="text-sm text-success" data-bind="performer.growth">+15%</div>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Fleet Utilization</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Active Vehicles</span>
+                                    <span class="text-sm font-semibold text-gray-900">32/38</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-success h-2 rounded-full" style="width: 84%"></div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Maintenance Due</span>
+                                    <span class="text-sm font-semibold text-warning">3 vehicles</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ManagerDashboard -->
+
+                <!-- Driver Dashboard View (Hidden by default) -->
+                <!-- @COMPONENT: DriverDashboard [mobile-optimized] -->
+                <div id="driverDashboard" class="hidden">
+                    <!-- Mobile-First Driver Interface -->
+                    <div class="max-w-md mx-auto lg:max-w-none">
+                        <!-- Driver Info Header -->
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-xl font-semibold">RP</div>
+                                <div>
+                                    <h2 class="text-xl font-semibold text-gray-900" data-bind="driver.name">Rajesh Patel</h2>
+                                    <p class="text-gray-600" data-bind="driver.vehicleAssigned">Assigned: HR-26-AB-1234</p>
+                                    <p class="text-sm text-success" data-bind="driver.status">On Duty</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Earnings -->
+                        <div class="bg-gradient-to-r from-primary to-primary-dark rounded-lg text-white p-6 mb-6">
+                            <div class="text-center">
+                                <h3 class="text-lg font-medium mb-2">Today's Earnings</h3>
+                                <div class="text-3xl font-bold mb-2" data-bind="driver.todayEarnings">₹1,755</div>
+                                <div class="text-sm opacity-90">
+                                    Target: <span data-bind="driver.targetEarnings">₹2,000</span> • Progress: <span data-bind="driver.progressPercent">87%</span>
+                                </div>
+                                <div class="w-full bg-blue-400 rounded-full h-2 mt-3">
+                                    <div class="bg-white h-2 rounded-full" style="width: 87%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <button class="bg-success text-white p-4 rounded-lg text-center hover:bg-green-600 transition-colors" data-event="click:logTrip">
+                                <i class="fas fa-plus-circle text-2xl mb-2"></i>
+                                <div class="font-medium">Log Trip</div>
+                            </button>
+                            <button class="bg-warning text-white p-4 rounded-lg text-center hover:bg-yellow-600 transition-colors" data-event="click:viewEarnings">
+                                <i class="fas fa-chart-line text-2xl mb-2"></i>
+                                <div class="font-medium">Earnings</div>
+                            </button>
+                        </div>
+
+                        <!-- Trip Logging Form -->
+                        <!-- @COMPONENT: TripLogForm -->
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Log New Trip</h3>
+                            <form class="space-y-4" data-event="submit:handleTripSubmit">
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                                        <input type="text" placeholder="Enter pickup location" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                               data-bind="tripForm.pickupLocation">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Drop Location</label>
+                                        <input type="text" placeholder="Enter drop location" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                               data-bind="tripForm.dropLocation">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Trip Revenue (₹)</label>
+                                        <input type="number" placeholder="Enter trip revenue" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                               data-bind="tripForm.revenue">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Distance (km)</label>
+                                        <input type="number" placeholder="Enter distance" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                               data-bind="tripForm.distance">
+                                    </div>
+                                </div>
+                                
+                                <!-- Payout Calculation Display -->
+                                <!-- @FUNCTIONALITY: Real-time payout calculation using formula: pay = min(revenue, 2250) * 0.30 + max(revenue - 2250, 0) * 0.70 -->
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="text-sm font-medium text-gray-700 mb-2">Calculated Payout</div>
+                                    <div class="text-xl font-semibold text-success" data-bind="calculated.payout">₹0</div>
+                                    <div class="text-xs text-gray-500 mt-1" data-bind="calculated.formula">
+                                        Formula: min(revenue, 2250) × 0.30 + max(revenue - 2250, 0) × 0.70
+                                    </div>
+                                </div>
+
+                                <button type="submit" 
+                                        class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-dark transition-colors touch-manipulation"
+                                        data-implementation="Should validate form and submit trip data">
+                                    <i class="fas fa-save mr-2"></i>
+                                    Log Trip
+                                </button>
+                            </form>
+                        </div>
+                        <!-- @END_COMPONENT: TripLogForm -->
+
+                        <!-- Recent Trips -->
+                        <div class="bg-surface rounded-lg shadow-sm border border-gray-200">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900">My Recent Trips</h3>
+                            </div>
+                            <div class="divide-y divide-gray-200">
+                                <!-- @MAP: driverTrips.map(trip => ( -->
+                                <div class="p-4" data-mock="true">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900" data-bind="trip.route">Delhi → Chandigarh</div>
+                                            <div class="text-sm text-gray-500" data-bind="trip.date">Today, 2:30 PM</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-gray-900" data-bind="trip.payout">₹855</div>
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-success" data-bind="trip.status">Approved</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Revenue: <span data-bind="trip.revenue">₹2,850</span> • Distance: <span data-bind="trip.distance">180 km</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-4" data-mock="true">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900">Gurgaon → Agra</div>
+                                            <div class="text-sm text-gray-500">Yesterday, 8:15 AM</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-gray-900">₹675</div>
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-warning">Pending</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Revenue: ₹2,250 • Distance: 210 km
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: DriverDashboard -->
+
+                <!-- Document Upload Modal (Hidden by default) -->
+                <!-- @COMPONENT: DocumentUploadModal -->
+                <div id="documentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+                    <div class="bg-surface rounded-lg shadow-xl max-w-md w-full">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Upload Document</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option>Driving License</option>
+                                    <option>Vehicle Registration</option>
+                                    <option>Insurance Certificate</option>
+                                    <option>Permit</option>
+                                </select>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Choose File</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                    <i class="fas fa-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">Drop files here or click to browse</p>
+                                    <input type="file" class="hidden" data-implementation="File upload component">
+                                </div>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-dark transition-colors" data-event="click:uploadDocument">
+                                    Upload
+                                </button>
+                                <button class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400 transition-colors" data-event="click:closeModal">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: DocumentUploadModal -->
+
+            </main>
+        </div>
+
+        <!-- Mobile Bottom Navigation (Shown only in driver view on mobile) -->
+        <!-- @COMPONENT: MobileBottomNav [mobile-only, driver-role] -->
+        <nav id="mobileNav" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-200 px-4 py-2 md:hidden hidden">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center p-2 text-primary" data-event="click:showDashboard">
+                    <i class="fas fa-home text-lg"></i>
+                    <span class="text-xs mt-1">Home</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-600" data-event="click:showTrips">
+                    <i class="fas fa-route text-lg"></i>
+                    <span class="text-xs mt-1">Trips</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-600" data-event="click:showEarnings">
+                    <i class="fas fa-money-bill-wave text-lg"></i>
+                    <span class="text-xs mt-1">Earnings</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-600" data-event="click:showProfile">
+                    <i class="fas fa-user text-lg"></i>
+                    <span class="text-xs mt-1">Profile</span>
+                </button>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: MobileBottomNav -->
+
+    </div>
+    <!-- @END_COMPONENT: AppLayout -->
+
+    <script>
+        // TODO: Implement React state management, API calls, and business logic
+        (function() {
+            // Role switching demo functionality
+            const roleSelector = document.getElementById('roleSelector');
+            const adminDashboard = document.getElementById('adminDashboard');
+            const managerDashboard = document.getElementById('managerDashboard');
+            const driverDashboard = document.getElementById('driverDashboard');
+            const sidebar = document.getElementById('sidebar');
+            const mobileNav = document.getElementById('mobileNav');
+
+            function switchRole(role) {
+                // Hide all dashboards
+                adminDashboard.classList.add('hidden');
+                managerDashboard.classList.add('hidden');
+                driverDashboard.classList.add('hidden');
+
+                // Show/hide sidebar and mobile nav based on role
+                if (role === 'driver') {
+                    sidebar.classList.add('hidden');
+                    mobileNav.classList.remove('hidden');
+                    driverDashboard.classList.remove('hidden');
+                } else {
+                    sidebar.classList.remove('hidden');
+                    mobileNav.classList.add('hidden');
+                    
+                    if (role === 'admin') {
+                        adminDashboard.classList.remove('hidden');
+                    } else if (role === 'manager') {
+                        managerDashboard.classList.remove('hidden');
+                    }
+                }
+            }
+
+            // Set initial role
+            switchRole('admin');
+
+            // Role selector change handler
+            roleSelector.addEventListener('change', function() {
+                switchRole(this.value);
+            });
+
+            // Real-time payout calculation demo
+            const revenueInput = document.querySelector('input[data-bind="tripForm.revenue"]');
+            const payoutDisplay = document.querySelector('[data-bind="calculated.payout"]');
+            const formulaDisplay = document.querySelector('[data-bind="calculated.formula"]');
+
+            if (revenueInput && payoutDisplay) {
+                revenueInput.addEventListener('input', function() {
+                    const revenue = parseFloat(this.value) || 0;
+                    const payout = Math.min(revenue, 2250) * 0.30 + Math.max(revenue - 2250, 0) * 0.70;
+                    
+                    payoutDisplay.textContent = `₹${Math.round(payout)}`;
+                    formulaDisplay.textContent = `min(${revenue}, 2250) × 0.30 + max(${revenue} - 2250, 0) × 0.70 = ₹${Math.round(payout)}`;
+                });
+            }
+
+            // Modal handling
+            const documentModal = document.getElementById('documentModal');
+            
+            // Close modal functionality
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-event="click:closeModal"]') || e.target === documentModal) {
+                    documentModal.classList.add('hidden');
+                }
+            });
+
+            // Demo interaction handlers
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-event*="click:"]')) {
+                    const action = e.target.getAttribute('data-event').replace('click:', '');
+                    console.log(`Action triggered: ${action}`);
+                    
+                    // Add visual feedback for demo
+                    e.target.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        e.target.style.transform = '';
+                    }, 150);
+                }
+            });
+
+            // Form submission handler
+            document.addEventListener('submit', function(e) {
+                if (e.target.matches('[data-event*="submit:"]')) {
+                    e.preventDefault();
+                    const action = e.target.getAttribute('data-event').replace('submit:', '');
+                    console.log(`Form submitted: ${action}`);
+                    
+                    // Demo success message
+                    alert('Trip logged successfully! (This is a demo)');
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
