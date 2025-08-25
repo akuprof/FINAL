@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { storage } from "./storage";
 import { config } from "dotenv";
 
-// Load environment variables
-config();
+// Load environment variables from .env.local
+config({ path: '.env.local' });
 
 // For local development, allow missing Supabase credentials
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
