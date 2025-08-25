@@ -11,7 +11,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://your-backend-host.onrender.com/api/$1"
+      "dest": "https://YOUR-BACKEND-URL.onrender.com/api/$1"
     },
     {
       "src": "/(.*)",
