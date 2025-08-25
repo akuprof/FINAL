@@ -61,6 +61,18 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Root route - helpful message for direct backend access
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: 'PLS Travels Backend API',
+      status: 'running',
+      endpoints: {
+        health: '/api/health',
+        docs: 'This is the backend API server. Use the frontend at https://final-theta-ochre.vercel.app'
+      }
+    });
+  });
+
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({ 
