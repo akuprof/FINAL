@@ -15,6 +15,7 @@ build
 .env.development.local
 .env.test.local
 .env.production.local
+.env.ci
 
 # OS files
 .DS_Store
@@ -53,3 +54,6 @@ vite.config.ts.*
 # Temporary files
 *.tmp
 *.temp
+
+# Deployment
+.vercel

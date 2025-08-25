@@ -1,0 +1,23 @@
+name: Run Migrations
+on:
+  workflow_dispatch:
+    inputs:
+      DATABASE_URL:
+        description: "Neon connection string"
+        required: true
+        type: string
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Run Drizzle migrations
+        env:
+          DATABASE_URL: ${{ inputs.DATABASE_URL }}
+        run: |
+          echo "DATABASE_URL=$DATABASE_URL" > .env.ci
+          npx drizzle-kit migrate --config=drizzle.config.ts
