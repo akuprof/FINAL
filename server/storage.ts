@@ -92,7 +92,9 @@ export interface IStorage {
 
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
+  getDocument(id: string): Promise<Document | undefined>;
   getDocumentsByEntity(entityId: string, entityType: string): Promise<Document[]>;
+  deleteDocument(id: string): Promise<void>;
   uploadFile(file: Buffer, path: string): Promise<string>;
 
   // Fuel station operations
@@ -339,12 +341,21 @@ export class DatabaseStorage implements IStorage {
     return newDocument;
   }
 
+  async getDocument(id: string): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document;
+  }
+
   async getDocumentsByEntity(entityId: string, entityType: string): Promise<Document[]> {
     return await db
       .select()
       .from(documents)
       .where(and(eq(documents.entityId, entityId), eq(documents.entityType, entityType)))
       .orderBy(desc(documents.uploadedAt));
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
   }
 
   // Fuel station operations

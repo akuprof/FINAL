@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, createSupabaseServerClient } from "./replitAuth";
+import type { DriverChecklist } from "@shared/schema";
 import { 
   insertDriverSchema,
   insertVehicleSchema,
@@ -277,7 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Users routes
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -293,7 +298,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Driver routes
   app.get('/api/drivers', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || !['admin', 'manager'].includes(user.role)) {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -308,7 +317,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/drivers', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -325,7 +338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vehicle routes
   app.get('/api/vehicles', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || !['admin', 'manager'].includes(user.role)) {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -340,7 +357,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/vehicles', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -357,7 +378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assignment routes
   app.post('/api/assignments', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       if (!user || !['admin', 'manager'].includes(user.role)) {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -673,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      let checklists;
+      let checklists: DriverChecklist[] = [];
       if (user.role === 'driver') {
         const driver = await storage.getDriverByUserId(userId);
         if (!driver) {
