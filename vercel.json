@@ -4,7 +4,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://pls-travels-backend.onrender.com"
+      "dest": "https://final-1-9eun.onrender.com"
     }
   ],
   "headers": [
