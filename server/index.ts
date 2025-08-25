@@ -3,10 +3,21 @@ import { config } from "dotenv";
 config({ path: '.env.local' });
 
 import express, { type Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Middleware
+app.use(cookieParser());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://final-theta-ochre.vercel.app'] 
+    : ['http://localhost:3000'],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

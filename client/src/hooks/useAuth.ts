@@ -1,10 +1,9 @@
 
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import type { User } from "@supabase/supabase-js";
 
-interface AuthUser extends User {
+interface AuthUser {
+  id: string;
+  email: string;
   role?: string;
   driverProfile?: any;
 }
@@ -14,94 +13,93 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if Supabase is available
-    if (!supabase.auth) {
-      console.warn('Supabase auth not available, skipping authentication');
-      setIsLoading(false);
-      return;
-    }
-
-    // Get initial session
-    const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const authUser = session.user as AuthUser;
-          // Fetch user profile to get role
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*, drivers(*)')
-            .eq('id', authUser.id)
-            .single();
-          
-          if (profile) {
-            authUser.role = profile.role;
-            authUser.driverProfile = profile.drivers?.[0];
-          }
-          setUser(authUser);
-        }
-      } catch (error) {
-        console.warn('Error getting session:', error);
-      }
-      setIsLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (session?.user) {
-          const authUser = session.user as AuthUser;
-          // Fetch user profile to get role
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*, drivers(*)')
-            .eq('id', authUser.id)
-            .single();
-          
-          if (profile) {
-            authUser.role = profile.role;
-            authUser.driverProfile = profile.drivers?.[0];
-          }
-          setUser(authUser);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.warn('Error in auth state change:', error);
-      }
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // Check authentication status on mount
+    checkAuth();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    if (!supabase.auth) {
-      return { data: null, error: { message: 'Auth not available' } };
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const { user } = await response.json();
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.warn('Error checking auth:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-    return await supabase.auth.signInWithPassword({ email, password });
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        return { data: { user: data.user }, error: null };
+      } else {
+        return { data: null, error: { message: data.message } };
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      return { data: null, error: { message: 'Network error' } };
+    }
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    if (!supabase.auth) {
-      return { data: null, error: { message: 'Auth not available' } };
-    }
-    return await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        data: metadata
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, metadata }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        return { data: { user: data.user }, error: null };
+      } else {
+        return { data: null, error: { message: data.message } };
       }
-    });
+    } catch (error) {
+      console.error('Sign up error:', error);
+      return { data: null, error: { message: 'Network error' } };
+    }
   };
 
   const signOut = async () => {
-    if (!supabase.auth) {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      setUser(null);
       return { error: null };
+    } catch (error) {
+      console.error('Sign out error:', error);
+      return { error: { message: 'Network error' } };
     }
-    return await supabase.auth.signOut();
   };
 
   return {
@@ -111,5 +109,6 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    checkAuth,
   };
 }

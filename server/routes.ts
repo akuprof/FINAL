@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, createSupabaseServerClient } from "./replitAuth";
 import { 
   insertDriverSchema,
   insertVehicleSchema,
@@ -84,6 +84,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const supabase = createSupabaseServerClient(req);
+      if (!supabase) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return res.status(401).json({ message: error.message });
+      }
+
+      if (data.session) {
+        // Set session cookies
+        res.cookie('sb-access-token', data.session.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days
+        });
+
+        res.cookie('sb-refresh-token', data.session.refresh_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days
+        });
+      }
+
+      res.json({ 
+        user: data.user,
+        message: "Login successful"
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const supabase = createSupabaseServerClient(req);
+      if (!supabase) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ 
+        user: data.user,
+        message: "Signup successful. Please check your email for verification."
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post('/api/auth/logout', async (req, res) => {
+    try {
+      const supabase = createSupabaseServerClient(req);
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+
+      // Clear cookies
+      res.clearCookie('sb-access-token');
+      res.clearCookie('sb-refresh-token');
+
+      res.json({ message: "Logout successful" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get('/api/auth/verify', async (req, res) => {
+    try {
+      const supabase = createSupabaseServerClient(req);
+      if (!supabase) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      // Get the session from cookies
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser(session.access_token);
+      
+      if (userError || !user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      res.json({ user });
+    } catch (error) {
+      console.error("Auth verification error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get('/api/auth/callback', async (req, res) => {
+    try {
+      const { token_hash, type, next = '/' } = req.query;
+      
+      if (!token_hash || !type) {
+        return res.status(400).json({ message: "Missing token_hash or type" });
+      }
+
+      const supabase = createSupabaseServerClient(req);
+      if (!supabase) {
+        return res.status(500).json({ message: "Authentication service unavailable" });
+      }
+
+      const { error } = await supabase.auth.verifyOtp({
+        type: type as any,
+        token_hash: token_hash as string,
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      // Redirect to frontend with success
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${next}`);
+    } catch (error) {
+      console.error("Auth callback error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
