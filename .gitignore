@@ -45,3 +45,11 @@ server/public
 
 # Vite
 vite.config.ts.*
+
+# Replit files
+.replit
+.local/
+
+# Temporary files
+*.tmp
+*.temp
