@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🔍 Checking PLS Travels production setup...\n');
 
 // Check .env.local exists
-const envPath = path.join(process.cwd(), '.env.local');
+const envPath = path.join(path.dirname(__dirname), '.env.local');
 if (!fs.existsSync(envPath)) {
   console.error('❌ .env.local not found! Please create it with the required variables.');
   process.exit(1);
@@ -45,10 +49,10 @@ if (placeholderVars.length > 0) {
 }
 
 // Check Vite config
-const viteConfigPath = path.join(process.cwd(), 'vite.config.ts');
+const viteConfigPath = path.join(path.dirname(__dirname), 'vite.config.ts');
 if (fs.existsSync(viteConfigPath)) {
   const viteConfig = fs.readFileSync(viteConfigPath, 'utf8');
-  if (viteConfig.includes('port: 3000') && viteConfig.includes('proxy: { "/api": "http://localhost:4000" }')) {
+  if (viteConfig.includes('port: 3000') && viteConfig.includes('"/api": "http://localhost:4000"')) {
     console.log('✅ Vite config: Port 3000 with API proxy to localhost:4000');
   } else {
     console.warn('⚠️  Vite config: Please ensure port 3000 and API proxy to localhost:4000');
@@ -56,7 +60,7 @@ if (fs.existsSync(viteConfigPath)) {
 }
 
 // Check package.json scripts
-const packagePath = path.join(process.cwd(), 'package.json');
+const packagePath = path.join(path.dirname(__dirname), 'package.json');
 if (fs.existsSync(packagePath)) {
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
   const scripts = packageJson.scripts || {};
@@ -72,8 +76,8 @@ if (fs.existsSync(packagePath)) {
 }
 
 // Check deployment configs
-const vercelPath = path.join(process.cwd(), 'vercel.json');
-const renderPath = path.join(process.cwd(), 'render.yaml');
+const vercelPath = path.join(path.dirname(__dirname), 'vercel.json');
+const renderPath = path.join(path.dirname(__dirname), 'render.yaml');
 
 if (fs.existsSync(vercelPath)) {
   console.log('✅ Vercel config: vercel.json present');
