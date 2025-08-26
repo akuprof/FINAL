@@ -10,7 +10,8 @@
     "build": "npx esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build:client": "vite build",
     "build:full": "npm run build:client && npm run build",
-    "start": "node dist/production.js",
+    "start": "npm run build:client && node serve-frontend.js",
+    "start:backend": "node dist/production.js",
     "check": "node ./scripts/check-env-and-ports.js",
     "db:push": "drizzle-kit push",
     "migrate": "drizzle-kit migrate"
