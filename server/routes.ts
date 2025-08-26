@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (data.session) {
-        // Set session cookies with proper settings for development
+        // Set session cookies with Supabase SSR default names
         res.cookie('sb-access-token', data.session.access_token, {
           httpOnly: true,
           secure: false, // Allow HTTP in development
