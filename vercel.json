@@ -1,10 +1,10 @@
 {
   "buildCommand": "npm run build:client",
   "outputDirectory": "dist/public",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://final-1-9eun.onrender.com"
+      "source": "/api/(.*)",
+      "destination": "https://final-1-9eun.onrender.com/api/$1"
     }
   ],
   "headers": [
