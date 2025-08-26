@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Landing() {
@@ -12,7 +12,15 @@ export default function Landing() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, isAuthenticated, user } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setSuccess("Authentication successful! Redirecting...");
+      // The App component will handle the redirect automatically
+    }
+  }, [isAuthenticated, user]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +44,12 @@ export default function Landing() {
       } else if (isSignUp && data) {
         setSuccess("Account created successfully! Please check your email to verify your account.");
         setIsSignUp(false);
+      } else if (!isSignUp && data) {
+        setSuccess("Login successful! Redirecting to dashboard...");
+        // Clear form
+        setEmail("");
+        setPassword("");
+        setShowLogin(false);
       }
     } catch (err) {
       setError("An unexpected error occurred");

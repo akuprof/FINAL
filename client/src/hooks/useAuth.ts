@@ -52,6 +52,8 @@ export function useAuth() {
 
       if (response.ok) {
         setUser(data.user);
+        // Trigger a re-check of authentication status
+        await checkAuth();
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };
@@ -77,6 +79,8 @@ export function useAuth() {
 
       if (response.ok) {
         setUser(data.user);
+        // Trigger a re-check of authentication status
+        await checkAuth();
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };
