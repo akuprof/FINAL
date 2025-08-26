@@ -86,7 +86,7 @@ app.use((req, res, next) => {
     }
   });
   
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  const host = '0.0.0.0';
   
   server.listen({
     port,
