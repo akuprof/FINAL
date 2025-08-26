@@ -53,6 +53,10 @@ export function useAuth() {
       if (response.ok) {
         // Set user immediately from login response
         setUser(data.user);
+        // Force a re-check of authentication to ensure consistency
+        setTimeout(() => {
+          checkAuth();
+        }, 100);
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };
@@ -79,6 +83,10 @@ export function useAuth() {
       if (response.ok) {
         // Set user immediately from signup response
         setUser(data.user);
+        // Force a re-check of authentication to ensure consistency
+        setTimeout(() => {
+          checkAuth();
+        }, 100);
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };

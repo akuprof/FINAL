@@ -18,7 +18,10 @@ export default function Landing() {
   useEffect(() => {
     if (isAuthenticated && user) {
       setSuccess("Authentication successful! Redirecting...");
-      // The App component will handle the redirect automatically
+      // Force redirect to dashboard
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     }
   }, [isAuthenticated, user]);
 
@@ -50,6 +53,10 @@ export default function Landing() {
         setEmail("");
         setPassword("");
         setShowLogin(false);
+        // Force redirect after successful login
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
       }
     } catch (err) {
       setError("An unexpected error occurred");
