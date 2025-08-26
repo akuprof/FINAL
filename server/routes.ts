@@ -105,18 +105,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (data.session) {
-        // Set session cookies
+        // Set session cookies with proper settings for development
         res.cookie('sb-access-token', data.session.access_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: false, // Allow HTTP in development
           sameSite: 'lax',
+          path: '/',
           maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days
         });
 
         res.cookie('sb-refresh-token', data.session.refresh_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: false, // Allow HTTP in development
           sameSite: 'lax',
+          path: '/',
           maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days
         });
       }
@@ -165,9 +167,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const supabase = createSupabaseServerClient(req);
       await supabase.auth.signOut();
 
-      // Clear cookies
-      res.clearCookie('sb-access-token');
-      res.clearCookie('sb-refresh-token');
+      // Clear cookies with proper settings
+      res.clearCookie('sb-access-token', { path: '/' });
+      res.clearCookie('sb-refresh-token', { path: '/' });
 
       res.json({ message: "Logout successful" });
     } catch (error) {

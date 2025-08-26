@@ -51,9 +51,8 @@ export function useAuth() {
       const data = await response.json();
 
       if (response.ok) {
+        // Set user immediately from login response
         setUser(data.user);
-        // Trigger a re-check of authentication status
-        await checkAuth();
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };
@@ -78,9 +77,8 @@ export function useAuth() {
       const data = await response.json();
 
       if (response.ok) {
+        // Set user immediately from signup response
         setUser(data.user);
-        // Trigger a re-check of authentication status
-        await checkAuth();
         return { data: { user: data.user }, error: null };
       } else {
         return { data: null, error: { message: data.message } };

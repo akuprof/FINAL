@@ -15,13 +15,11 @@ import { DriverManagement } from "./components/DriverManagement";
 
 // Force complete redeploy - Supabase graceful fallback implementation
 function Router() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      {isAuthenticated ? (
         <>
           <Route path="/" component={Home} />
           <Route
@@ -38,6 +36,8 @@ function Router() {
           />
           {/* Add more protected routes here as needed */}
         </>
+      ) : (
+        <Route path="/" component={Landing} />
       )}
       <Route component={NotFound} />
     </Switch>
