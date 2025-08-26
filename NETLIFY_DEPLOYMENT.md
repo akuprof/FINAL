@@ -35,7 +35,7 @@
 ### **Build Settings**
 - **Build Command:** `npm run build:client`
 - **Publish Directory:** `dist/public`
-- **Node Version:** 18
+- **Node Version:** 18.19.0
 
 ### **Environment Variables**
 Add these in Netlify dashboard → Site settings → Environment variables:
@@ -86,7 +86,7 @@ dist/
 ## **🔧 Troubleshooting**
 
 ### **Build Fails**
-- Check Node.js version (should be 18+)
+- Check Node.js version (should be 18.19.0)
 - Verify all dependencies are installed
 - Check build logs in Netlify dashboard
 

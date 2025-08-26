@@ -3,7 +3,7 @@
   command = "npm run build:client"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.19.0"
 
 [[redirects]]
   from = "/api/*"
