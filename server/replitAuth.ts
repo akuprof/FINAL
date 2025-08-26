@@ -7,9 +7,9 @@ import { config } from "dotenv";
 // Load environment variables from .env.local
 config({ path: '.env.local' });
 
-// Supabase configuration
-const SUPABASE_URL = 'https://lcmxoxiafeeqjxbnwlic.supabase.co'
-const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjbXhveGlhZmVlcWp4Ym53bGljIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjA2MTM3NiwiZXhwIjoyMDcxNjM3Mzc2fQ.CKaJnsgp4E5Xn-G99TPPeFhVCh2RlsaEorvlqRQpxDA'
+// Supabase configuration using environment variables
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lcmxoxiafeeqjxbnwlic.supabase.co'
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjbXhveGlhZmVlcWp4Ym53bGljIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjA2MTM3NiwiZXhwIjoyMDcxNjM3Mzc2fQ.CKaJnsgp4E5Xn-G99TPPeFhVCh2RlsaEorvlqRQpxDA'
 
 // Create a server client for Express.js
 export const createSupabaseServerClient = (req: any) => {
